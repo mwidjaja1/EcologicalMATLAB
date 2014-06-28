@@ -1,14 +1,18 @@
 %% Matthew Widjaja.
 % Research Program Runner.
-% Instructions: This file & func_v3.m must be in the same folder in order to be used.
+% Instructions: This file & func_v4.m must be in the same folder in order to be used.
 
 clear all
 format short
 
+global equName
+global alteredIC
 global fixEqu
 global maxNode
 global newAlpha
 global steadyValueP
+global oldAlpha
+global constantR
 
 
 %% Blank Slate
@@ -24,14 +28,19 @@ end
 maxNode = 8;		% Amount of Nodes present
 masterNode = 2;		% Amount of Master Nodes present
 	masterNodes = [4 8];	% States which nodes are Masters -- For Method 8
-maxTime = 250;		% Max amount of time to use
-equName = @func_v3;		% Name of file w. Equations
+maxTime = 200;		% Max amount of time to use
+equName = @func_v4;		% Name of file w. Equations
 masterIC = ones(1,maxNode);		% Set master initial conditions
 alteredIC = masterIC;		% Creates a matrix for the altered ICs
 intCount = 1;		% Integer Counter for some methods
-steadyValueP = [25.7582403331707; 14.4897532138419; 25.1560459880049; ...
-	20.2103098684016; 27.4442695233632; 18.2208433120330; ...
-	16.1573060647332; 17.4994443177253]; 
+
+
+%% General Data
+% General Data to run the model
+steadyValueP = [38.8089080995067, 43.5963099130963, 39.4611963199623, ...
+ 27.6303237065429, 26.8372058084276, 28.0030748854752, ...
+ 34.7552952146415, 47.0617038749445];	
+oldAlpha = [-2.3305, -4.7368, -0.8303, -1.4475, 0, 0, 0, -0.291868997002398;  -0.2565, -4.7009, -0.522, -0.3013, 0, 0, 0, -0.647544780938589; -0.1342, -1.1164, -1.7607, -0.5695, 0, 0, 0, -0.523688100581974; -0.2881, -0.3794, -0.2665, -2.968, 0, 0, 0, -1.01620423202169;  0, 0, 0, -0.478736026755033, -3.1091, -0.0561, -1.0181, -0.8356; 0, 0, 0, -1.08243797034983, -0.0955, -2.1481, -1.1953, -0.347; 0, 0, 0, -0.242649494404053, -0.8154, -0.4252, -2.7833, -0.576; 0, 0, 0, -1.12489771091476, -0.3553, -0.0653, -0.3707, -2.3896];						
 
 
 %% Method 8 Specific Parameters
@@ -58,6 +67,14 @@ fprintf('\n8. Manipulate Slave Nodes for a Master Node');
 
 fprintf('\n\n');
 nodeMethod = input('Select a Method (0-8) = ');
+
+
+%% All Methods -- WT Calculation
+% This calculates the WT Values for a second Results Matrix called WT
+intCount = intCount - 1;
+fixEqu = 0;
+[T,W] = ode45(equName, [0 maxTime], masterIC );		% Solves the model
+WT(1,:) = W(end,:);		% Saves WT data
 
 
 %% Method 1: SKO for All -- Solver
@@ -151,10 +168,8 @@ if nodeMethod == 5;
 				alteredIC(fixNode(i1)) = fixValue;		% Replaces the value of Node # to the declared value
 			end
 			[T,Y] = ode45(equName, [0 maxTime], alteredIC );	% Solves the model
-			yData = Y;		% Saves data
-			xData = T;
 		else
-		end
+		end	
 end
     
 
@@ -180,15 +195,11 @@ end
 %% Method 7: Sweep 2 Nodes -- Solver
 % Solves a Custom Sweep of 2 Nodes
 if nodeMethod == 7
+	maxValue = input('Select the max value the two nodes should be multiplied by = ');
 	for i1=1:1:2
 		fixNode(i1) = input('Knockout Node Number = ');		% Node # to modify
 		fixEqu(i1) = fixNode(i1);		% Saves Node # to a matrix for use in the Function
-	end
-	
-	maxValue = input('Select the max value these nodes should be multiplied by = ');
-	for i1 = 1:1:2
-		avgValue(i1) = steadyValueP(fixNode(i1));		% Retrieves the WT Value
-		nodeLimit(i1) = avgValue(i1) * maxValue;	% Multiplies WT Value by Scaling Constant
+		nodeLimit(i1) = steadyValueP(fixNode(i1)) * maxValue;	% Multiplies WT Value by Scaling Constant
 	end
 		
 	for i1 = 0:1:nodeLimit(1)
@@ -197,7 +208,7 @@ if nodeMethod == 7
 		for i2 = 0:1:nodeLimit(2)
 			alteredIC(fixNode(2)) = i2;		% Fixes value of Node 2
 			[T,Y] = ode45(equName, [0 maxTime], alteredIC );	% Solves the model
-			zData(intCount,:) = Y(end,:);
+			Data(i1+1,i2+1,:) = Y(end,:);
 			intCount = intCount + 1;		
 		end
 	end
@@ -249,14 +260,6 @@ if nodeMethod == 8
 	yData = linsolve(impactMatrix,vectorValues);	% The closest set of nodes to the actual 
 	xData = yData(1:maxNode,:) - desiredValues';	% The diff between actual & desired values
 end
-	
-
-%% All Methods -- WT Calculation
-% This calculates the WT Values for a second Results Matrix called WT
-intCount = intCount - 1;
-fixEqu = 0;
-[T,Y] = ode45(equName, [0 maxTime], masterIC );		% Solves the model
-WT(1,:) = Y(end,:);		% Saves WT data
 
 
 %% Method 1: SKO for All -- Data Presentation
@@ -308,7 +311,7 @@ if nodeMethod == 5;
 % This plots Time vs. Organism & Organism vs. Organism
 	graph = input('\nShould plots be generated? (y/n) = ','s');
 	if graph == 'y';
-		plot(xData,yData(1));
+		plot(T,Y(:,1));
 	else
 	end
 	
@@ -317,8 +320,8 @@ if nodeMethod == 5;
 	if steady=='y'
 		fprintf('The steadyState Values in the order of Node 1 --> 8 are:\n');
 		for i = 1:maxNode
-			ans1(i) = Y(end,i);		% Obtains values from the last row in 'Y'
-			fprintf('%f, ',ans1(i));
+			fprintf('%f, ',Y(end,i));
+			fprintf('/n/n');
 		end
 	else
 	end
@@ -328,13 +331,13 @@ if nodeMethod == 5;
 	if steady=='y'
 		fprintf('The Constant Values in the order of Node 1 --> 8 are:\n');
 		for i = 1:maxNode
-			ans2(i) = constant(1,i);	% Retrieves the 'Constants' matrix from func_v2.m
-			fprintf('%f, ',ans2(i));
+			fprintf('%f, ',constantR(i));
+			fprintf('/n');
 		end
 		fprintf('\n\nThe Alpha Values in the order of Node 1 --> 8 are:\n');
 		for i = 1:maxNode
-			ans3(i) = newAlpha(1,i);	% Retrieves the 'newAlpha' matrix from func_v2.m 
-			fprintf('%f, ',ans3(i));
+			fprintf('%f, ',newAlpha(1,i));
+			fprintf('/n/n');
 		end
 	end
 end
@@ -365,21 +368,11 @@ if nodeMethod == 7;
 	fprintf('\nGenerating Plots. Note Nodes %g & %g are +1 larger in these plots\n',fixNode);
 	
 	subDiv = ceil(maxNode^0.5);		% Determines width & height of Subplots
-	rowI2 = floor(length(zData) / (nodeLimit(1)));	% The #Rows devoted for each value of node 'i2'
-	rowI1 = floor((length(zData) / rowI2) - 1);	% The #Times Node 'i1' changed
 	
 	for i1 = 1:1:maxNode
-		intCount = 1;
-		for i2 = 0:1:rowI1
-			rowStart = floor(1 + (i2 * rowI2));		% The row where a new value of Node 'i2' began
-			rowEnd = floor(((i2+1) * rowI2));	% The row where the current value of Node 'i2' ended
-			Data(:,intCount, i1) = zData([rowStart:rowEnd],i1);	% Saves each node's data into Data(i,j) where i = I1 & j = I2
-			intCount = intCount + 1;
-		end
-			
 		subplot(subDiv,subDiv,i1)
-		mesh(Data(:,:,i1));	% This plots the data
-		xlabel('Node 4'); ylabel('Node 8');
+		mesh(Data(:,:,fixNode(1)), Data(:,:,fixNode(2)), Data(:,:,i1))	% This plots the data
+		xlabel(['Node ',num2str(fixNode(1))]); ylabel(['Node ',num2str(fixNode(2))]);
 		title(['Node ',num2str(i1)]);
 	end
 end
