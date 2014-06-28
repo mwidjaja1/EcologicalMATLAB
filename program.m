@@ -1,6 +1,6 @@
 %% Matthew Widjaja.
 % Research Program Runner.
-% Instructions: This file & func_v4.m must be in the same folder in order to be used.
+% Instructions: This file & func_v5.m must be in the same folder in order to be used.
 
 clear all
 format short
@@ -24,24 +24,21 @@ end
 
 
 %% General Parameters
-% General Parameters to help model efficiency
+% General Parameters to help model efficiencyx
 maxNode = 8;		% Amount of Nodes present
 masterNode = 2;		% Amount of Master Nodes present
 	masterNodes = [4 8];	% States which nodes are Masters -- For Method 8
-maxTime = 200;		% Max amount of time to use
-equName = @func_v4;		% Name of file w. Equations
+maxTime = 7500;		% Max amount of time to use
+equName = @func_v5;		% Name of file w. Equations
 masterIC = ones(1,maxNode);		% Set master initial conditions
 alteredIC = masterIC;		% Creates a matrix for the altered ICs
-intCount = 1;		% Integer Counter for some methods
+intCount = 0;		% Integer Counter for some methods
 
 
 %% General Data
 % General Data to run the model
-steadyValueP = [38.8089080995067, 43.5963099130963, 39.4611963199623, ...
- 27.6303237065429, 26.8372058084276, 28.0030748854752, ...
- 34.7552952146415, 47.0617038749445];	
-oldAlpha = [-2.3305, -4.7368, -0.8303, -1.4475, 0, 0, 0, -0.291868997002398;  -0.2565, -4.7009, -0.522, -0.3013, 0, 0, 0, -0.647544780938589; -0.1342, -1.1164, -1.7607, -0.5695, 0, 0, 0, -0.523688100581974; -0.2881, -0.3794, -0.2665, -2.968, 0, 0, 0, -1.01620423202169;  0, 0, 0, -0.478736026755033, -3.1091, -0.0561, -1.0181, -0.8356; 0, 0, 0, -1.08243797034983, -0.0955, -2.1481, -1.1953, -0.347; 0, 0, 0, -0.242649494404053, -0.8154, -0.4252, -2.7833, -0.576; 0, 0, 0, -1.12489771091476, -0.3553, -0.0653, -0.3707, -2.3896];						
-
+steadyValueP = [37.6583262579766, 46.6720836475590, 26.8674882660994,  26.0160062116315, 46.7387831740059, 44.3536550187196,  26.5644981471383, 49.7072030311665];					
+oldAlpha = [-0.0139, -0.0063, -0.0088, -0.0224, 0, 0, 0, -0.00637366326755053; -0.0025, -0.0189, -0.0169, -0.0122, 0, 0, 0, -0.00258912672726849;  -0.0011, -0.0133, -0.0274, -0.0201, 0, 0, 0, -0.00340351541750547;  -0.0076, -0.0056 ,-0.0144, -0.0315, 0, 0, 0,-0.0118562222381121;  0, 0, 0, -0.000789018955068564, -0.0364, -0.0067, -0.0033, -0.0078; 0, 0, 0, -0.00449527435703973 ,-0.007, -0.0349, -0.0036, -0.0341;  0, 0, 0, -0.00100095417983515, -0.0039, -0.0036, -0.0254, -0.0038; 0, 0, 0, -0.00361539381179086, -0.0044, -0.0091, -0.0084, -0.0141];				
 
 %% Method 8 Specific Parameters
 % These parameters set different weights & goals for each node in Method 8
@@ -71,75 +68,101 @@ nodeMethod = input('Select a Method (0-8) = ');
 
 %% All Methods -- WT Calculation
 % This calculates the WT Values for a second Results Matrix called WT
-intCount = intCount - 1;
-fixEqu = 0;
-[T,W] = ode45(equName, [0 maxTime], masterIC );		% Solves the model
-WT(1,:) = W(end,:);		% Saves WT data
+	fixEqu = 0;
+	[T,W] = ode45(equName, [0 maxTime], masterIC );		% Solves the model
+	WT(1,:) = W(end,:);		% Saves WT data
 
 
-%% Method 1: SKO for All -- Solver
-% Solves when all nodes get single knocked out
+%% Method 1: SKO for All
 if nodeMethod == 1
+	
+% Solves when all nodes get single knocked out
 	for i1 = 1:maxNode
+		intCount = intCount + 1;
 		fixEqu = i1;	% States equation to fix
 		alteredIC(i1) = 0;	% Fixes the node's IC to 0
 		[T,Y] = ode45(equName, [0 maxTime], alteredIC );	% Solves the model
 		yData(intCount,:) = Y(end,:);	% Saves data
 		xData(intCount,:) = i1;
 		alteredIC = masterIC;	% Resets the IC to default values
-		intCount = intCount + 1;
 	end
+	
+% Presents Data for Method 1
+	fprintf('\nResults from yAxis Matrix where row KO_0 = WT Value: \n');
+		for i = 1:intCount
+		fprintf('KO %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',xData(i,1),yData(i,:));
+		end
+	fprintf('Wildtype \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',WT(1,:));
 end
-	
-	
-%% Method 2: DKO for All -- Solver
-% Solves when all nodes get double knocked out
+
+
+%% Method 2: DKO for All
 if nodeMethod == 2
+	
+% Solves when all nodes get double knocked out
 	for i1 = 1:maxNode-1
 		fixEqu(1) = i1;		% States equation to fix
 		alteredIC(i1) = 0;	% Fixes the node's IC to 0
 		for i2 = (i1+1):maxNode
+			intCount = intCount + 1;
 			fixEqu(2) = i2;		% States equation to fix
 			alteredIC(i2) = 0;	% Fixes the node's IC to 0
 			[T,Y] = ode45(equName, [0 maxTime], alteredIC );	% Solves the model
 			yData(intCount,:) = Y(end,:);	% Saves data
 			xData(intCount,:) = [i1, i2];
 			alteredIC(i2) = masterIC(i2);	% Resets the second looping IC to default
-			intCount = intCount + 1;
 		end
 		alteredIC(i1) = masterIC(i1);	% Resets the first looping IC to default
 	end
-end
 	
+% Presents Data for Method 2
+	fprintf('\nResults from yAxis Matrix where row KO_0 = WT Value: \n');
+		for i = 1:intCount
+		fprintf('KO %g & %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',xData(i,:),yData(i,:));
+		end
+	fprintf('Wildtype \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',WT(1,:));
+end
 
-%% Method 3: TKO for Nodes 4 & 8 -- Solver
-% Solves when nodes 4, 8, and some other node gets knocked out
+
+%% Method 3: TKO for Master Nodes -- Solver
 if nodeMethod == 3
-	fixEqu(1) = 4;		% Next 4 lines will fix Node 4 & 8 to 0
-	fixEqu(2) = 8;
-	alteredIC(fixEqu(1)) = 0;
-	alteredIC(fixEqu(2)) = 0;
+	
+% Fix the Master Nodes to '0'
+	fixEqu(1) = masterNodes(1);	
+	fixEqu(2) = masterNodes(2);
+	alteredIC(masterNodes(1)) = 0;
+	alteredIC(masterNodes(2)) = 0;
+	
+% Fixes a third node (via loop) to 0 automatically & solves the model
 	for i1 = 1:maxNode
-		if i1== fixEqu(1)
+		if i1== fixEqu(1)	% This & the next 3 lines will ignore Equ 4 & 8. 
 			continue
 		elseif i1 == fixEqu(2)
 			continue
 		else
+			intCount = intCount + 1;
 			fixEqu(3) = i1;		% States equation to fix
 			alteredIC(i1) = 0;	% Fixes the node's IC to 0
 			[T,Y] = ode45(equName, [0 maxTime], alteredIC );	% Solves the model
 			yData(intCount,:) = Y(end,:);	% Saves data
 			xData(intCount,:) = [fixEqu(1), fixEqu(2), fixEqu(3)];
 			alteredIC(i1) = masterIC(i1);	% Resets the IC to default values
-			intCount = intCount + 1;
 		end
 	end
+
+% Presents Data for Method 3
+	fprintf('\nResults from yAxis Matrix for Master Nodes %d & %d \n', fixEqu(1), fixEqu(2));
+	for i = 1:intCount
+		fprintf('KO %g & %g & %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',xData(i,:),yData(i,:));
+	end
+	fprintf('Wildtype \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',WT(1,:));
 end
 
 
-%% Method 4: Scaling Master Nodes -- Solver
-% Solves when the Master Nodes are fixed
+%% Method 4: Scaling Master Nodes
 if nodeMethod == 4
+
+% Sets the values of the Master Nodes
 	for i1 = 1:masterNode
 		fixEqu(i1,:) = masterNodes(i1);		% This sets the master nodes to be fixed
 		fprintf('\nRegarding Node %g\n',fixEqu(i1,:));
@@ -147,17 +170,20 @@ if nodeMethod == 4
 		alteredIC(fixEqu(i1,:)) = multNode*steadyValueP(fixEqu(i1,:));
 	end
 	
+% Solves the model	
 	[T,Y] = ode45(equName, [0 maxTime], alteredIC );	% Solves the model
-	
-	yData(1,:) = Y(end,:);	% Saves data
-	xData(1,:) = fixEqu;
-	intCount = intCount + 1;
+
+% Presents Data for Method 4
+	fprintf('\nResults from yAxis Matrix where row KO_0 = WT Value: \n');
+	fprintf('Results: \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',Y(end,:));
+	fprintf('Wildtype: \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',WT(1,:));
 end
 
 
-%% Method 5: Fix Nodes -- Solver
-% This lets the user change the node to a desired value
+%% Method 5: Fix Nodes
 if nodeMethod == 5;
+
+% This lets the user change the node to a desired value
 	fix = input('How many nodes should be fixed? (0 -> 10) = ');
 		if fix >= 1
 			fixEqu = zeros(1,fix);
@@ -167,41 +193,90 @@ if nodeMethod == 5;
 				fixValue = input('Knockout with the Value = ');		% How the node should be modified
 				alteredIC(fixNode(i1)) = fixValue;		% Replaces the value of Node # to the declared value
 			end
-			[T,Y] = ode45(equName, [0 maxTime], alteredIC );	% Solves the model
-		else
-		end	
-end
-    
+		end
+		[T,Y] = ode45(equName, [0 maxTime], alteredIC );	% Solves the model
+	
+% This plots Time vs. Organism & Organism vs. Organism
+	graph = input('\Display plots? (y/n) = ','s');
+	if graph == 'y';
+		nodeName = ['Node'];
+		for i1 = 1:1:maxNode
+			hold all;
+			if i1 == fixNode
+				continue
+			else
+				nodeStr = num2str(i1);		% This & the next 3 lines automates each node's plot
+				nodeStr = strcat(nodeName,nodeStr);
+				plot(T(:,1),Y(:,i1),'--','DisplayName',nodeStr);
+				legend('-DynamicLegend');
+			end
+		end
+	else
+	end
+	
+% This prints the Steady State, Constants, and new Alpha values.
+	fprintf('\nThe steadyState Values in the order of Node 1 --> 8 are:\n');
+		for i = 1:maxNode
+			fprintf('%f, ',Y(end,i));
+		end
+	fprintf('\n\nThe Constant Values in the order of Node 1 --> 8 are:\n');
+		for i = 1:maxNode
+				fprintf('%f, ',constantR(i));
+		end
+	fprintf('\n\nThe Alpha Values in the order of Node 1 --> 8 are:\n');
+		for i = 1:maxNode
+				fprintf('%f, ',newAlpha(1,i));
+		end
+	end
 
-%% Method 6: Sweep 1 Node -- Solver
-% Solves a Custom Sweep of 1 Node
+
+%% Method 6: Sweep 1 Node
 if nodeMethod == 6
+	
+% Selects the node that will be fixed & to which value (via multiplication)
 	fixNode = input('Knockout Node Number = ');		% Node # to modify
 		fixEqu(1) = fixNode;		% Saves Node # to a matrix for use in the Function
 	maxValue = input('Select the max value your node should be multiplied by = ');
 		avgValue = steadyValueP(fixNode);	% Retrieves the WT Value
 		nodeLimit = maxValue * avgValue;	% Multiplies WT Value by Scaling Constant
-		
+
+% Sweeps the specified node & solves the model
 	for i1 = 0:0.1:nodeLimit
+		intCount = intCount + 1;	
 		alteredIC(fixNode) = i1;		% Fixes value of Node #
 		[T,Y] = ode45(equName, [0 maxTime], alteredIC );	% Solves the model
 		yData(intCount,:) = Y(end,:);
 		xData(intCount,1) = i1;
-		intCount = intCount + 1;		
 	end
+
+% Presents Data for Method 6
+	nodeName = ['Node'];
+		for i1 = 1:1:maxNode
+			hold all;
+			if i1 == fixNode
+				continue
+			else
+				nodeStr = num2str(i1);
+				nodeStr = strcat(nodeName,nodeStr);
+				plot(xData(:,1),yData(:,i1),'--','DisplayName',nodeStr);
+				legend('-DynamicLegend');
+			end
+		end
 end
 
 
 %% Method 7: Sweep 2 Nodes -- Solver
-% Solves a Custom Sweep of 2 Nodes
 if nodeMethod == 7
+	
+% Selects the two nodes to fix and to which value (via multiplication)
 	maxValue = input('Select the max value the two nodes should be multiplied by = ');
 	for i1=1:1:2
 		fixNode(i1) = input('Knockout Node Number = ');		% Node # to modify
 		fixEqu(i1) = fixNode(i1);		% Saves Node # to a matrix for use in the Function
 		nodeLimit(i1) = steadyValueP(fixNode(i1)) * maxValue;	% Multiplies WT Value by Scaling Constant
 	end
-		
+	
+% Solves the model
 	for i1 = 0:1:nodeLimit(1)
 		alteredIC(fixNode(1)) = i1;		% Fixes value of Node 1
 		fprintf('Node %g is at %g \n',fixNode(1),i1);
@@ -212,13 +287,26 @@ if nodeMethod == 7
 			intCount = intCount + 1;		
 		end
 	end
+
+% Presents Data for Method 7
+	grid on
+	fprintf('\nGenerating Plots. Note Nodes %g & %g are +1 larger in these plots\n',fixNode);
+
+	subDiv = ceil(maxNode^0.5);		% Determines width & height of Subplots
+
+	for i1 = 1:1:maxNode
+		subplot(subDiv,subDiv,i1)
+		mesh(Data(:,:,fixNode(1)), Data(:,:,fixNode(2)), Data(:,:,i1))	% This plots the data
+		xlabel(['Node ',num2str(fixNode(1))]); ylabel(['Node ',num2str(fixNode(2))]);
+		title(['Node ',num2str(i1)]);
+	end
 end
 
 
-%% Method 8: Manipulate Slave Nodes for Master Nodes -- Setup
-% Creates the Matrices needed to solve for Method 8
 
+%% Method 8: Manipulate Slave Nodes for Master Nodes
 if nodeMethod == 8
+
 % Creates a Data Matrix of when each Master Node is knocked out
 	for i1 = 1:masterNode
 		alteredIC(masterNodes(i1)) = 0;		% Fixes the node's IC to 0
@@ -242,10 +330,6 @@ if nodeMethod == 8
 	impactMatrix((masterNode+1):end,1:maxNode)...
 		= eye(maxNode);   %identity matrix for lower lft blk
 	
-
-%% Method 8: Manipulate Slave Nodes for Master Nodes -- Solver
-% Solves by creating many Weight Matrices or using a User-Defined Matrix
-
 % Applies Weight Matrix
 	weightMatrix = weightValues(ones(masterNode,1),:);
 	impactMatrix(1:masterNode,1:maxNode) = weightMatrix.*...
@@ -259,127 +343,8 @@ if nodeMethod == 8
 % Solves the System
 	yData = linsolve(impactMatrix,vectorValues);	% The closest set of nodes to the actual 
 	xData = yData(1:maxNode,:) - desiredValues';	% The diff between actual & desired values
-end
-
-
-%% Method 1: SKO for All -- Data Presentation
-% Presents Data for Method 1
-if nodeMethod == 1;
-fprintf('\nResults from yAxis Matrix where row KO_0 = WT Value: \n');
-	for i = 1:intCount
-	fprintf('KO %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',xData(i,1),yData(i,:));
-	end
-fprintf('Wildtype \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',WT(1,:));
-end
-
-
-%% Method 2: DKO for All -- Data Presentation
-% Presents Data for Method 2
-if nodeMethod == 2;
-fprintf('\nResults from yAxis Matrix where row KO_0 = WT Value: \n');
-	for i = 1:intCount
-	fprintf('KO %g & %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',xData(i,:),yData(i,:));
-	end
-fprintf('Wildtype \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',WT(1,:));
-end
-
-
-%% Method 3: TKO for Nodes 4 & 8 -- Data Presentation
-% Presents Data for Method 3
-if nodeMethod == 3;
-fprintf('\nResults from yAxis Matrix for Node 4 & 8 \n');
-	for i = 1:intCount
-	fprintf('KO %g & %g & %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',xData(i,:),yData(i,:));
-	end
-fprintf('Wildtype \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',WT(1,:));
-end
-
-
-%% Method 4: Scaling Master Nodes -- Data Presentation
-% Presents Data for Method 4
-if nodeMethod == 4;
-fprintf('\nResults from yAxis Matrix where row KO_0 = WT Value: \n');
-	fprintf('Results: \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',yData(1,:));
-	fprintf('Wildtype: \t %g \t %g \t %g \t %g \t %g \t %g \t %g \t %g \n',WT(1,:));
-end
-
-
-%% Method 5: Fix Nodes -- Data Presentation
-% Provides options for presenting data for Method 5
-if nodeMethod == 5;
 	
-% This plots Time vs. Organism & Organism vs. Organism
-	graph = input('\nShould plots be generated? (y/n) = ','s');
-	if graph == 'y';
-		plot(T,Y(:,1));
-	else
-	end
-	
-% This lets the user retrieve the Steady State Values
-	steady = input('\nShould steady-state values be printed? (y/n) = ','s');
-	if steady=='y'
-		fprintf('The steadyState Values in the order of Node 1 --> 8 are:\n');
-		for i = 1:maxNode
-			fprintf('%f, ',Y(end,i));
-			fprintf('/n/n');
-		end
-	else
-	end
-    
-% This lets the user retrieve the Steady State Values
-	steady = input('\nShould constants & alpha values be printed? (y/n) = ','s');
-	if steady=='y'
-		fprintf('The Constant Values in the order of Node 1 --> 8 are:\n');
-		for i = 1:maxNode
-			fprintf('%f, ',constantR(i));
-			fprintf('/n');
-		end
-		fprintf('\n\nThe Alpha Values in the order of Node 1 --> 8 are:\n');
-		for i = 1:maxNode
-			fprintf('%f, ',newAlpha(1,i));
-			fprintf('/n/n');
-		end
-	end
-end
-
-
-%% Method 6: Sweep 1 Node -- Data Presentation
-% Presents Data for Method 6
-if nodeMethod == 6;
-nodeName = ['Node'];
-	for i1 = 1:1:maxNode
-		hold all;
-		if i1 == fixNode
-			continue
-		else
-			nodeStr = num2str(i1);
-			nodeStr = strcat(nodeName,nodeStr);
-			plot(xData(:,1),yData(:,i1),'--','DisplayName',nodeStr);
-			legend('-DynamicLegend');
-		end
-	end
-end
-
-
-%% Method 7: Sweep 2 Nodes -- Data Presentation
-% Presents Data for Method 7
-if nodeMethod == 7;
-	grid on
-	fprintf('\nGenerating Plots. Note Nodes %g & %g are +1 larger in these plots\n',fixNode);
-	
-	subDiv = ceil(maxNode^0.5);		% Determines width & height of Subplots
-	
-	for i1 = 1:1:maxNode
-		subplot(subDiv,subDiv,i1)
-		mesh(Data(:,:,fixNode(1)), Data(:,:,fixNode(2)), Data(:,:,i1))	% This plots the data
-		xlabel(['Node ',num2str(fixNode(1))]); ylabel(['Node ',num2str(fixNode(2))]);
-		title(['Node ',num2str(i1)]);
-	end
-end
-
-
-%% Method 8: Manipulate Slave Nodes for Master Nodes -- Data Presentation
-if nodeMethod == 8;
+% Presents Data for Method 8
 	fprintf('Realistic Nodes:\t %g\t %g\t %g\t %g\t %g\t %g\t %g\t %g\n',yData(1:maxNode));
 	fprintf('Theoratical Nodes:\t %g\t %g\t %g\t %g\t %g\t %g\t %g\t %g\n',desiredValues(1:maxNode));
 	fprintf('Which is a difference of:\t %g\t %g\t %g\t %g\t %g\t %g\t %g\t %g\n',xData);

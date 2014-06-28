@@ -1,8 +1,8 @@
 %% Matthew Widjaja.
 % Research Function Set.
-% Instructions: Run program_v3.m to utilize these equations
+% Instructions: Run program_v5.m to utilize these equations
 
-function dy = func(t,y)
+function dy = func_v5(t,y)
 global fixEqu 
 global maxNode
 global newAlpha
