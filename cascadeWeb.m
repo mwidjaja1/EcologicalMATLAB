@@ -1,4 +1,4 @@
-clear; clc;
+clear all; clc;
 
 %% --- Matthew Widjaja: Cascade Food Webs ---
 % Purpose: This MATLAB code creates a cascade food web
@@ -56,7 +56,7 @@ links_L = input('Number of Links to Generate = ');
 dirConn_C = links_L/(species_S)^2;
 
 % Step 2B: Solve for B if 2C=(1/1+B)
-beta_B = (1+(2*dirConn_C))/(2*dirConn_C);
+beta_B = (1/(2*dirConn_C))-1;
 
 % Step 2C: Generate (beta-distributed) Random Numbers for each species
 rand_x = betarnd(1,beta_B,1,species_S);
@@ -69,10 +69,13 @@ rand_x = betarnd(1,beta_B,1,species_S);
 % distributed number which was derived in Step 2.
 
 range_r = ones(1,species_S);
+halfRange_r = ones(1,species_S);
+mid_c = ones(1,species_S);
 
 for i=1:1:species_S
     range_r(i) = niche_n(i) * rand_x(i);
-    mid_c(i) = (range_r(i)/2);
+    halfRange_r(i) = range_r(i)/2;
+    mid_c(i) = (niche_n(i)-halfRange_r(i))*rand(1) + halfRange_r(i);
 end
 
 
@@ -84,14 +87,16 @@ end
 pred_a = ones(species_S,species_S);
 
 for i1=1:1:species_S
-    minRange = mid_c(i) - mid_c(i);
-    maxRange = mid_c(i) + mid_c(i);
+    minRange = mid_c(i) - halfRange_r(i);
+    maxRange = mid_c(i) + halfRange_r(i);
     for i2=1:1:species_S
         if i1==i2
             pred_a(i1,i2) = 0;
-        elseif minRange <= niche_n(i2) && niche_n(i2) <= maxRange
+        elseif minRange <= niche_n(i2) <= maxRange
+            fprintf('Yes: Range of %g-%g with niche %g\n', minRange,maxRange,niche_n(i2));
             pred_a(i1,i2) = 1;
         else
+            fprintf('No: Range of %g-%g with niche %g\n', minRange,maxRange,niche_n(i2));
             pred_a(i1,i2) = 0;
         end
     end 
