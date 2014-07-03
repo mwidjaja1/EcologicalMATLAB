@@ -112,15 +112,15 @@ pred_a = ones(species_S,species_S);
 for i=1:1:species_S
     minRange = mid_c(i) - halfRange_r(i);
     maxRange = mid_c(i) + halfRange_r(i);
-    for j=1:1:species_S
-        if i==j
-            pred_a(i,j) = 0;
-        elseif minRange <= niche_n(j) <= maxRange
-            fprintf('Yes: Range of %g-%g with niche %g\n', minRange,maxRange,niche_n(j));
-            pred_a(i,j) = 1;
+    for i2=1:1:species_S
+        if i1==i2
+            pred_a(i1,i2) = 0;
+        elseif minRange <= niche_n(i2) <= maxRange
+            % fprintf('Yes: Range of %g-%g with niche %g\n', minRange,maxRange,niche_n(i2));
+            pred_a(i1,i2) = 1;
         else
-            fprintf('No: Range of %g-%g with niche %g\n', minRange,maxRange,niche_n(j));
-            pred_a(i,j) = 0;
+            % fprintf('No: Range of %g-%g with niche %g\n', minRange,maxRange,niche_n(i2));
+            pred_a(i1,i2) = 0;
         end
     end 
 end
