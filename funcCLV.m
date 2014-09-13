@@ -3,12 +3,8 @@
 % Instructions: Run programCLV.m to utilize these equations
 
 function dy = func_v5(t,y)
-global fixEqu 
-global maxNode
-global newAlpha
-global steadyValueP
-global oldAlpha
-global constantR
+global maxNode, global fixEqu
+global constantR,  global newAlpha, global oldAlpha, global steadyValP 
 
 %% Constants
 % This calculates the Constants using oldAlpha & steadyValueP
@@ -16,8 +12,8 @@ global constantR
 constantR = zeros(1,maxNode);		% Generates Constants Matrix
 for(i1 = 1:maxNode)						% Populates Constants Matrix
 	for(i2 = 1:maxNode)
-		newAlpha(i1,i2) = -oldAlpha(i1,i2) / steadyValueP(i1);
-		constantR(i1) = constantR(i1) + (newAlpha(i1,i2) * steadyValueP(i2));
+		newAlpha(i1,i2) = -oldAlpha(i1,i2) / steadyValP(i1);
+		constantR(i1) = constantR(i1) + (newAlpha(i1,i2) * steadyValP(i2));
 	end
 end
 
